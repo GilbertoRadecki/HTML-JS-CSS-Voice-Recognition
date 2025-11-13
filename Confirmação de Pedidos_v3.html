@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Confirmação de Pedidos</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background: #f0f2f5;
+      color: #333;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: auto;
+    }
+
+    form {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+    }
+
+    h1 {
+      text-align: center;
+      color: #007BFF;
+      margin-bottom: 6px;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: #444;
+      margin-bottom: 12px;
+    }
+
+    .reminder {
+      background: #fff7e6;
+      border-left: 4px solid #ffc107;
+      padding: 12px;
+      margin: 12px 0;
+      border-radius: 6px;
+      line-height: 1.4;
+    }
+
+    .reminder strong {
+      display: block;
+    }
+
+    label {
+      font-weight: bold;
+      display: block;
+      margin-top: 8px;
+    }
+
+    input[type="text"],
+    input[type="date"],
+    textarea {
+      width: 100%;
+      padding: 9px;
+      margin-top: 6px;
+      margin-bottom: 12px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 15px;
+      box-sizing: border-box;
+    }
+
+    textarea {
+      resize: vertical;
+    }
+
+    .section {
+      background: #f9fafb;
+      border: 1px solid #ddd;
+      padding: 12px;
+      margin-top: 18px;
+      border-radius: 8px;
+    }
+
+    .section h3 {
+      margin-top: 0;
+      color: #007BFF;
+      font-size: 18px;
+    }
+
+    .radio-group {
+      display: flex;
+      gap: 10px;
+      margin: 4px 0 12px 0;
+      align-items: center;
+    }
+
+    .radio-group label {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-weight: normal;
+    }
+
+    button {
+      background: #007BFF;
+      color: white;
+      border: none;
+      padding: 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      width: 100%;
+      font-size: 16px;
+      margin-top: 20px;
+    }
+
+    button:hover {
+      background: #005bb5;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    #textoGerado {
+      width: 100%;
+      height: 250px;
+      margin-top: 15px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      padding: 10px;
+      font-size: 15px;
+      resize: vertical;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <form id="formulario">
+      <h1>Confirmação de Pedidos</h1>
+
+      <div class="subtitle">
+        Confirmar pedidos, endereço de entrega e informações repassadas às empresas parceiras.
+      </div>
+
+      <div class="reminder">
+        <strong>
+          LEMBRE-SE: VOCÊ NÃO ESTÁ SOZINHO(A)! QUALQUER DÚVIDA, CONTATE-NOS NO WHATSAPP.
+          <span style="color: red;">NÃO SAIA DO LOCAL COM DÚVIDAS.</span>
+          FIQUE DE OLHO: A estrutura física condiz com o valor do pedido?
+          O responsável parece estar nervoso ou preocupado?
+          Dificuldades para encontrar o endereço ou responsável?
+          Precisou falar com outras pessoas para localizar o responsável?
+          Inclua sempre os nomes no relatório da visita.
+          Algo não parece bem? Não poupe detalhes, suas percepções em campo são essenciais para o trabalho.
+        </strong>
+      </div>
+
+      <label for="idDemanda">ID da demanda:</label>
+      <input id="idDemanda" name="idDemanda" type="text" required placeholder="Ex: 1234-2025">
+
+      <!-- Bloco 1 -->
+      <div class="section">
+        <h3>Informações da visita</h3>
+        <label for="dataVisita">Visita de campo realizada em:</label>
+        <input id="dataVisita" name="dataVisita" type="date" required>
+
+        <label for="empresa">Empresa:</label>
+        <input id="empresa" name="empresa" type="text" placeholder="Nome da empresa">
+
+        <label for="endereco">Endereço (Rua, número Complemento, Bairro - Cidade/UF):</label>
+        <input id="endereco" name="endereco" type="text" placeholder="Endereço de entrega">
+      </div>
+
+      <!-- Bloco 1.1 -->
+      <div class="section">
+        <h3>Validação do(s) telefone(s)</h3>
+        <label for="telefone">Informe os números de telefone para os quais você ligou e por quem você foi atendido(a)</label>
+        <textarea id="telefone" name="telefone"
+  placeholder="Ex: (61) 98888-1234: Não atendeu ; (61) 98888-5678: José da Silva"
+  rows="4" required>
+</textarea>
+      </div>
+
+      <!-- Bloco 2 -->
+      <div class="section">
+        <h3>Do endereço visitado</h3>
+        <label>Endereço localizado:</label>
+        <div class="radio-group">
+          <label><input type="radio" name="enderecoLocalizado" value="Sim" onchange="mostrarSecaoEndereco()"> Sim</label>
+          <label><input type="radio" name="enderecoLocalizado" value="Não" onchange="mostrarSecaoEndereco()"> Não</label>
+        </div>
+
+		<!-- Campo: Descreva as características do imóvel -->
+		<div id="secaoSim" class="hidden">
+		  <label for="caracteristicas">Descreva as características do imóvel:</label>
+		  <div style="display: flex; gap: 6px; align-items: center;">
+			<textarea id="caracteristicas" name="caracteristicas" rows="4" minlength="80"
+			  placeholder="Ex: No endereço visitado foi localizado um imóvel comercial com fachada de identificação..."></textarea>
+			
+		  </div>
+		  <button type="button" onclick="startRecognition('caracteristicas')">🎤</button>
+		</div>
+
+		<!-- Campo: Pedir informações aos vizinhos -->
+		<div id="secaoNao" class="hidden">
+		  <label for="pedirInfo">Pedir informações aos vizinhos:</label>
+		  <div style="display: flex; gap: 6px; align-items: center;">
+			<textarea id="pedirInfo" name="pedirInfo" rows="4" minlength="150"
+			  placeholder="Exemplo: O agente de campo foi atendido pelo Sr./Sra. [nome da pessoa]..."></textarea>
+			
+		  </div>
+		  <button type="button" onclick="startRecognition('pedirInfo')">🎤</button>
+		</div>
+
+      <!-- Bloco 3 -->
+      <div class="section">
+        <h3>Da confirmação</h3>
+        <label>Alguém confirmou o pedido?</label>
+        <div class="radio-group">
+          <label><input type="radio" name="pedidoConfirmado" value="Sim" onchange="mostrarSecaoConfirmacao()"> Sim</label>
+          <label><input type="radio" name="pedidoConfirmado" value="Não" onchange="mostrarSecaoConfirmacao()"> Não</label>
+        </div>
+
+		<!-- Campo: Relate como o pedido foi confirmado e por quem -->
+		<div id="secaoConfirmou" class="hidden">
+		  <label for="comoConfirmou">Relate como o pedido foi confirmado e por quem.</label>
+		  <div style="display: flex; gap: 6px; align-items: center;">
+			<textarea id="comoConfirmou" name="comoConfirmou" rows="5" minlength="120"></textarea>
+			
+		  </div>
+		  <button type="button" onclick="startRecognition('comoConfirmou')">🎤</button>
+		</div>
+
+		<!-- Campo: Relate em detalhes o que levou o pedido a não ser confirmado -->
+		<div id="secaoNaoConfirmou" class="hidden">
+		  <label for="naoConfirmou">Relate em detalhes o que levou o pedido a não ser confirmado.</label>
+		  <div style="display: flex; gap: 6px; align-items: center;">
+			<textarea id="naoConfirmou" name="naoConfirmou" rows="5" minlength="50"></textarea>
+			
+		  </div>
+		  <button type="button" onclick="startRecognition('naoConfirmou')">🎤</button>
+		</div>
+
+      <!-- Bloco 4 -->
+      <div class="section">
+        <h3>Do termo de confirmação</h3>
+        <label>A declaração de confirmação do pedido foi preenchida?</label>
+        <div class="radio-group">
+          <label><input type="radio" name="declaracaoPreenchida" value="Sim" onchange="mostrarSecaoDeclaracao()"> Sim</label>
+          <label><input type="radio" name="declaracaoPreenchida" value="Não" onchange="mostrarSecaoDeclaracao()"> Não</label>
+        </div>
+
+        <div id="secaoDeclaracaoOk" class="hidden">
+          <label>Envie pelo WhatsApp uma cópia do termo preenchido.</label>
+        </div>
+
+        <div id="secaoDeclaracaoNOk" class="hidden">
+          <label for="naoPreencheu">Motivo do não preenchimento:</label>
+          <textarea id="naoPreencheu" name="naoPreencheu" rows="5" minlength="50"></textarea>
+        </div>
+      </div>
+
+      <!-- Bloco 5 -->
+      <div class="section">
+        <h3>Do Documento</h3>
+        <label>A cópia do documento foi fornecida?</label>
+        <div class="radio-group">
+          <label><input type="radio" name="documentoApresentado" value="Sim" onchange="mostrarSecaoDocumento()"> Sim</label>
+          <label><input type="radio" name="documentoApresentado" value="Não" onchange="mostrarSecaoDocumento()"> Não</label>
+        </div>
+
+        <div id="secaoDocumentoOk" class="hidden">
+          <label>Envie a cópia pelo WhatsApp.</label>
+        </div>
+
+        <div id="secaoDocumentoNOk" class="hidden">
+          <label for="naoApresentou">Motivo da não apresentação:</label>
+          <textarea id="naoApresentou" name="naoApresentou" rows="5" minlength="50"></textarea>
+        </div>
+      </div>
+
+      <!-- Bloco final -->
+      <div class="section">
+        <h3>Parabéns! Você chegou ao fim deste formulário!</h3>
+        <label><span style="color: red;">NÃO SAIA DO LOCAL SEM REGISTRAR O QUE HÁ NO ENDEREÇO.</span></label>
+      </div>
+
+      <!-- Botão para gerar texto -->
+      <button type="button" onclick="gerarTexto()">Gerar Texto</button>
+
+      <!-- Campo de texto para exibir resultado -->
+      <textarea id="textoGerado" placeholder="O texto gerado aparecerá aqui..." readonly></textarea>
+
+      <!-- Botão copiar texto -->
+      <button type="button" onclick="copiarTexto()">Copiar Texto</button>
+    </form>
+  </div>
+
+  <script>
+    function mostrarSecaoEndereco() {
+      const valor = document.querySelector('input[name="enderecoLocalizado"]:checked')?.value;
+      document.getElementById('secaoSim').classList.toggle('hidden', valor !== 'Sim');
+      document.getElementById('secaoNao').classList.toggle('hidden', valor !== 'Não');
+    }
+
+    function mostrarSecaoConfirmacao() {
+      const valor = document.querySelector('input[name="pedidoConfirmado"]:checked')?.value;
+      document.getElementById('secaoConfirmou').classList.toggle('hidden', valor !== 'Sim');
+      document.getElementById('secaoNaoConfirmou').classList.toggle('hidden', valor !== 'Não');
+    }
+
+    function mostrarSecaoDeclaracao() {
+      const valor = document.querySelector('input[name="declaracaoPreenchida"]:checked')?.value;
+      document.getElementById('secaoDeclaracaoOk').classList.toggle('hidden', valor !== 'Sim');
+      document.getElementById('secaoDeclaracaoNOk').classList.toggle('hidden', valor !== 'Não');
+    }
+
+    function mostrarSecaoDocumento() {
+      const valor = document.querySelector('input[name="documentoApresentado"]:checked')?.value;
+      document.getElementById('secaoDocumentoOk').classList.toggle('hidden', valor !== 'Sim');
+      document.getElementById('secaoDocumentoNOk').classList.toggle('hidden', valor !== 'Não');
+    }
+
+    // Função para formatar data
+    function formatarData(dataISO) {
+      if (!dataISO) return '';
+      const meses = [
+        "janeiro", "fevereiro", "março", "abril", "maio", "junho",
+        "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"
+      ];
+      const d = new Date(dataISO);
+      return `${d.getDate()} de ${meses[d.getMonth()]} de ${d.getFullYear()}`;
+    }
+
+    // Gerar texto com as informações
+  function gerarTexto() {
+    const form = document.getElementById('formulario');
+    const dados = Object.fromEntries(new FormData(form).entries());
+
+    // 🔒 Validação dos campos obrigatórios
+    if (!dados.idDemanda.trim()) {
+      alert("Por favor, preencha o campo 'ID da demanda'.");
+      return;
+    }
+    if (!dados.dataVisita.trim()) {
+      alert("Por favor, preencha o campo 'Visita de campo realizada em'.");
+      return;
+    }
+    if (!dados.empresa.trim()) {
+      alert("Por favor, preencha o campo 'Empresa'.");
+      return;
+    }
+    if (!dados.endereco.trim()) {
+      alert("Por favor, preencha o campo 'Endereço'.");
+      return;
+    }
+    if (!dados.telefone.trim()) {
+      alert("Por favor, preencha o campo 'Validação do(s) telefone(s)'.");
+      return;
+    }
+
+    const texto = 
+`ID da demanda: ${dados.idDemanda || ""}
+Visita de campo realizada em ${formatarData(dados.dataVisita)}
+Empresa: ${dados.empresa}
+Endereço: ${dados.endereco}
+
+${dados.telefone || ""}
+
+${dados.enderecoLocalizado ? "Endereço localizado: " + dados.enderecoLocalizado : ""}
+
+${dados.caracteristicas || ""}
+
+${dados.pedirInfo || ""}
+
+${dados.pedidoConfirmado ? "Pedido confirmado: " + dados.pedidoConfirmado : ""}
+
+${dados.comoConfirmou || ""}
+
+${dados.naoConfirmou || ""}
+
+${dados.declaracaoPreenchida ? "Declaração preenchida: " + dados.declaracaoPreenchida : ""}
+
+${dados.naoPreencheu || ""}
+
+${dados.documentoApresentado ? "Documento apresentado: " + dados.documentoApresentado : ""}
+
+${dados.naoApresentou || ""}`;
+
+    document.getElementById("textoGerado").value = texto.trim();
+  }
+    // Função para copiar texto
+    function copiarTexto() {
+      const texto = document.getElementById("textoGerado");
+      texto.select();
+      document.execCommand("copy");
+      alert("Texto copiado com sucesso!");
+    }
+  </script>
+<script>
+  function startRecognition(idCampo) {
+	if (!('webkitSpeechRecognition' in window)) {
+	  alert('Seu navegador não suporta reconhecimento de voz.');
+	  return;
+	}
+
+	const recognition = new webkitSpeechRecognition();
+	recognition.lang = 'pt-BR';
+	recognition.interimResults = false;
+	recognition.maxAlternatives = 1;
+
+	recognition.onresult = function(event) {
+	  const texto = event.results[0][0].transcript;
+	  const campo = document.getElementById(idCampo);
+	  campo.value += (campo.value ? ' ' : '') + texto;
+	};
+
+	recognition.onerror = function() {
+	  alert('Ocorreu um erro no reconhecimento de voz.');
+	};
+
+	recognition.start();
+  }
+</script>
+
+</body>
+</html>
