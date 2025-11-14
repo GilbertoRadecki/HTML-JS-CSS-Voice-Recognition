@@ -130,6 +130,19 @@
       font-size: 15px;
       resize: vertical;
     }
+
+    /* pequenos stacks para os inputs de foto */
+    .foto-input {
+      margin-bottom: 10px;
+    }
+
+    .small-button {
+      width: auto;
+      display: inline-block;
+      padding: 8px 12px;
+      font-size: 14px;
+      margin-top: 8px;
+    }
   </style>
 </head>
 
@@ -285,6 +298,44 @@
         <label><span style="color: red;">NÃO SAIA DO LOCAL SEM REGISTRAR O QUE HÁ NO ENDEREÇO.</span></label>
       </div>
 
+      <!-- === NOVA SEÇÃO: Fotos (6 inputs) === -->
+      <div class="section" id="fotosSection">
+        <h3>Fotos da visita (6 fotos em paisagem)</h3>
+        <p>Envie exatamente 6 fotos em orientação paisagem (largura maior que altura). As imagens serão comprimidas automaticamente (compressão leve) e agrupadas em um ZIP nomeado com o ID da demanda.</p>
+
+        <div class="foto-input">
+          <label for="foto1">Foto 1:</label>
+          <input id="foto1" type="file" accept="image/*" capture="environment">
+        </div>
+
+        <div class="foto-input">
+          <label for="foto2">Foto 2:</label>
+          <input id="foto2" type="file" accept="image/*" capture="environment">
+        </div>
+
+        <div class="foto-input">
+          <label for="foto3">Foto 3:</label>
+          <input id="foto3" type="file" accept="image/*" capture="environment">
+        </div>
+
+        <div class="foto-input">
+          <label for="foto4">Foto 4:</label>
+          <input id="foto4" type="file" accept="image/*" capture="environment">
+        </div>
+
+        <div class="foto-input">
+          <label for="foto5">Foto 5:</label>
+          <input id="foto5" type="file" accept="image/*" capture="environment">
+        </div>
+
+        <div class="foto-input">
+          <label for="foto6">Foto 6:</label>
+          <input id="foto6" type="file" accept="image/*" capture="environment">
+        </div>
+
+        <button type="button" class="small-button" onclick="gerarZip()">Gerar ZIP das fotos</button>
+      </div>
+
       <!-- Botão para gerar texto -->
       <button type="button" onclick="gerarTexto()">Gerar Texto</button>
 
@@ -295,6 +346,9 @@
       <button type="button" onclick="copiarTexto()">Copiar Texto</button>
     </form>
   </div>
+
+  <!-- Dependência para criação de ZIP -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
 
   <script>
     function mostrarSecaoEndereco() {
@@ -338,23 +392,23 @@
     const dados = Object.fromEntries(new FormData(form).entries());
 
     // 🔒 Validação dos campos obrigatórios
-    if (!dados.idDemanda.trim()) {
+    if (!dados.idDemanda || !dados.idDemanda.trim()) {
       alert("Por favor, preencha o campo 'ID da demanda'.");
       return;
     }
-    if (!dados.dataVisita.trim()) {
+    if (!dados.dataVisita || !dados.dataVisita.trim()) {
       alert("Por favor, preencha o campo 'Visita de campo realizada em'.");
       return;
     }
-    if (!dados.empresa.trim()) {
+    if (!dados.empresa || !dados.empresa.trim()) {
       alert("Por favor, preencha o campo 'Empresa'.");
       return;
     }
-    if (!dados.endereco.trim()) {
+    if (!dados.endereco || !dados.endereco.trim()) {
       alert("Por favor, preencha o campo 'Endereço'.");
       return;
     }
-    if (!dados.telefone.trim()) {
+    if (!dados.telefone || !dados.telefone.trim()) {
       alert("Por favor, preencha o campo 'Validação do(s) telefone(s)'.");
       return;
     }
@@ -397,6 +451,7 @@ ${dados.naoApresentou || ""}`;
       alert("Texto copiado com sucesso!");
     }
   </script>
+
 <script>
   function startRecognition(idCampo) {
 	if (!('webkitSpeechRecognition' in window)) {
@@ -420,6 +475,177 @@ ${dados.naoApresentou || ""}`;
 	};
 
 	recognition.start();
+  }
+</script>
+
+<!-- ====== SCRIPTS NOVOS: compressão leve + validação paisagem + zip ====== -->
+<script>
+  // Configuração de compressão (compressão leve)
+  const TARGET_WIDTH = 1600;    // largura alvo em px (compressão leve)
+  const JPEG_QUALITY = 0.8;     // qualidade jpeg (0..1)
+
+  // Utilitário: carrega imagem e retorna ImageBitmap (melhor desempenho)
+  function loadImageBitmap(file) {
+    return new Promise((resolve, reject) => {
+      if ('createImageBitmap' in window) {
+        createImageBitmap(file).then(bitmap => resolve(bitmap)).catch(err => {
+          // fallback para Image object
+          const img = new Image();
+          img.onload = () => resolve(img);
+          img.onerror = reject;
+          img.src = URL.createObjectURL(file);
+        });
+      } else {
+        const img = new Image();
+        img.onload = () => resolve(img);
+        img.onerror = reject;
+        img.src = URL.createObjectURL(file);
+      }
+    });
+  }
+
+  // Verifica orientação paisagem (largura > altura)
+  async function verificarPaisagem(file) {
+    try {
+      const img = await loadImageBitmap(file);
+      // img pode ser ImageBitmap ou HTMLImageElement
+      const width = img.width || img.naturalWidth;
+      const height = img.height || img.naturalHeight;
+      // liberamos object URL se for HTMLImageElement (tem src)
+      return width > height;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  // Comprime e converte para Blob JPEG com as configurações acima
+  async function compressImageToJpegBlob(file, targetWidth = TARGET_WIDTH, quality = JPEG_QUALITY) {
+    // carregue como ImageBitmap para desempenho
+    let imgBitmap;
+    try {
+      imgBitmap = await createImageBitmap(file);
+    } catch (err) {
+      // fallback para Image element
+      const img = await new Promise((resolve, reject) => {
+        const i = new Image();
+        i.onload = () => resolve(i);
+        i.onerror = reject;
+        i.src = URL.createObjectURL(file);
+      });
+      imgBitmap = img;
+    }
+
+    const originalWidth = imgBitmap.width || imgBitmap.naturalWidth;
+    const originalHeight = imgBitmap.height || imgBitmap.naturalHeight;
+
+    // calcula tamanho final preservando proporção
+    let targetW = originalWidth;
+    let targetH = originalHeight;
+    if (originalWidth > targetWidth) {
+      targetW = targetWidth;
+      targetH = Math.round((originalHeight * targetWidth) / originalWidth);
+    }
+
+    // canvas para desenhar
+    const canvas = document.createElement('canvas');
+    canvas.width = targetW;
+    canvas.height = targetH;
+    const ctx = canvas.getContext('2d');
+
+    // desenha - se imgBitmap for ImageBitmap ou Image
+    ctx.drawImage(imgBitmap, 0, 0, targetW, targetH);
+
+    // converte para blob JPEG
+    const blob = await new Promise((resolve) => {
+      canvas.toBlob(resolve, 'image/jpeg', quality);
+    });
+
+    // cleanup
+    if (imgBitmap.close) {
+      try { imgBitmap.close(); } catch (e) {}
+    }
+
+    return blob;
+  }
+
+  // Função principal: gera ZIP com 6 fotos
+  async function gerarZip() {
+    const idDemanda = document.getElementById('idDemanda').value.trim();
+    if (!idDemanda) {
+      alert('Preencha o campo "ID da demanda" antes de gerar o ZIP.');
+      return;
+    }
+
+    const campos = ['foto1','foto2','foto3','foto4','foto5','foto6'];
+    const files = [];
+
+    // 1) verificar existência e orientação
+    for (let i = 0; i < campos.length; i++) {
+      const el = document.getElementById(campos[i]);
+      if (!el || !el.files || !el.files[0]) {
+        alert(`A foto ${i+1} não foi enviada. Envie as 6 fotos em paisagem antes de gerar o ZIP.`);
+        return;
+      }
+      files.push(el.files[0]);
+    }
+
+    // 2) verificar orientação e comprimir
+    const compressedBlobs = [];
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+
+      // Verifica se é realmente imagem
+      if (!file.type.startsWith('image/')) {
+        alert(`O arquivo da foto ${i+1} não é uma imagem válida.`);
+        return;
+      }
+
+      const isLandscape = await verificarPaisagem(file);
+      if (!isLandscape) {
+        alert(`A foto ${i+1} não está em orientação paisagem (largura deve ser maior que altura). Por favor, reenvie em paisagem.`);
+        return;
+      }
+
+      // comprime a imagem (compressImageToJpegBlob)
+      try {
+        const blob = await compressImageToJpegBlob(file, TARGET_WIDTH, JPEG_QUALITY);
+        compressedBlobs.push({ blob, originalName: file.name });
+      } catch (err) {
+        console.error('Erro ao comprimir a imagem', err);
+        alert(`Erro ao processar a foto ${i+1}. Tente novamente.`);
+        return;
+      }
+    }
+
+    // 3) criar ZIP com JSZip
+    try {
+      const zip = new JSZip();
+      // cria pasta com nome do ID da demanda
+      const pasta = zip.folder(idDemanda);
+
+      // adiciona as imagens, nomeando foto_1.jpg ... foto_6.jpg
+      for (let i = 0; i < compressedBlobs.length; i++) {
+        const entryName = `foto_${i+1}.jpg`;
+        pasta.file(entryName, compressedBlobs[i].blob);
+      }
+
+      // gerar blob do zip
+      const zipBlob = await zip.generateAsync({ type: 'blob' });
+
+      // forçar download
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(zipBlob);
+      a.download = `${idDemanda}.zip`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(a.href);
+
+      alert('ZIP gerado e download iniciado com sucesso.');
+    } catch (err) {
+      console.error('Erro ao criar ZIP', err);
+      alert('Ocorreu um erro ao gerar o ZIP. Verifique o console para mais detalhes.');
+    }
   }
 </script>
 
